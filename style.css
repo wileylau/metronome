@@ -40,12 +40,14 @@ body {
 }
 
 .title {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     font-size: 24px;
-    font-weight: 300;
+    font-weight: 400;
     color: #333;
     margin-bottom: 30px;
     text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
     letter-spacing: 2px;
+    text-transform: uppercase;
 }
 
 .beat-indicator {
@@ -166,6 +168,7 @@ body {
 }
 
 .bpm-label {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     font-size: 12px;
     color: #666;
     margin-left: 8px;
@@ -284,10 +287,12 @@ body {
 
 .mark {
     position: absolute;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 600;
     color: #666;
     text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+    letter-spacing: 0.5px;
 }
 
 .mark-60 {
@@ -387,10 +392,12 @@ body {
 }
 
 .btn-text {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     font-size: 14px;
-    font-weight: bold;
+    font-weight: 600;
     color: #333;
     letter-spacing: 1px;
+    text-transform: uppercase;
 }
 
 .start-stop-btn.active .btn-text {
@@ -475,6 +482,7 @@ body {
 .footer-text {
     margin: 0;
     text-align: center;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
     font-size: 11px;
     font-weight: 400;
     color: #666;
