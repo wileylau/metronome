@@ -7,6 +7,15 @@ class Metronome {
         this.lastAngle = 0;
         this.lastBpm = 120;
         
+        this.touchStartAngle = 0;
+        this.knobStartAngle = 0;
+        this.activeTouchId = null;
+        this.touchStartTime = 0;
+        this.lastTouchTime = 0;
+        this.touchVelocity = 0;
+        this.isMultiTouch = false;
+        this.touchSensitivity = 1.0;
+        
         this.nextBeatTime = 0;
         this.lookahead = 25.0;
         this.scheduleAheadTime = 0.1;
@@ -76,14 +85,15 @@ class Metronome {
         this.bpmInput.addEventListener('focus', () => this.bpmInput.select());
         this.bpmInput.addEventListener('blur', () => this.validateBpmInput());
         
-        this.dial.addEventListener('mousedown', (e) => this.handleDialInteraction(e));
-        this.dial.addEventListener('touchstart', (e) => this.handleDialInteraction(e), { passive: false });
+        this.dial.addEventListener('mousedown', (e) => this.handleInteractionStart(e));
+        this.dial.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
         
-        document.addEventListener('mousemove', (e) => this.drag(e));
-        document.addEventListener('touchmove', (e) => this.drag(e), { passive: false });
+        document.addEventListener('mousemove', (e) => this.handleMouseMove(e));
+        document.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
         
-        document.addEventListener('mouseup', () => this.stopDrag());
-        document.addEventListener('touchend', () => this.stopDrag());
+        document.addEventListener('mouseup', (e) => this.handleInteractionEnd(e));
+        document.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
+        document.addEventListener('touchcancel', (e) => this.handleTouchEnd(e), { passive: false });
         
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space' && !this.bpmInput.matches(':focus')) {
@@ -93,16 +103,26 @@ class Metronome {
         });
     }
     
-    handleDialInteraction(e) {
+    getDialCenter() {
         const rect = this.dial.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-        
-        const clickX = clientX - centerX;
-        const clickY = clientY - centerY;
+        return {
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2
+        };
+    }
+    
+    getAngleFromPoint(x, y, centerX, centerY) {
+        return Math.atan2(y - centerY, x - centerX);
+    }
+    
+    getCurrentKnobAngle() {
+        return ((this.bpm - 60) / (240 - 60)) * 270;
+    }
+    
+    handleInteractionStart(e) {
+        const center = this.getDialCenter();
+        const clickX = e.clientX - center.x;
+        const clickY = e.clientY - center.y;
         const distance = Math.sqrt(clickX * clickX + clickY * clickY);
         
         const dialRadius = 100;
@@ -111,7 +131,7 @@ class Metronome {
         if (distance > knobRadius && distance <= dialRadius) {
             this.setBPMFromAngle(clickX, clickY);
         } else {
-            this.startDrag(e);
+            this.startMouseDrag(e);
         }
     }
     
@@ -133,33 +153,109 @@ class Metronome {
         this.playDetentClick();
     }
     
-    startDrag(e) {
+    handleTouchStart(e) {
+        e.preventDefault();
+        
+        if (e.touches.length > 1) {
+            this.isMultiTouch = true;
+            this.handleInteractionEnd();
+            return;
+        }
+        
+        this.isMultiTouch = false;
+        const touch = e.touches[0];
+        this.activeTouchId = touch.identifier;
+        
+        const center = this.getDialCenter();
+        const touchX = touch.clientX - center.x;
+        const touchY = touch.clientY - center.y;
+        const distance = Math.sqrt(touchX * touchX + touchY * touchY);
+        
+        const dialRadius = 100;
+        const knobRadius = 70;
+        
+        if (distance > knobRadius && distance <= dialRadius) {
+            this.setBPMFromAngle(touchX, touchY);
+        } else {
+            this.startTouchDrag(touch, center);
+        }
+    }
+    
+    startTouchDrag(touch, center) {
         this.isDragging = true;
         this.dial.style.cursor = 'grabbing';
         
-        const rect = this.dial.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
+        this.touchStartAngle = this.getAngleFromPoint(touch.clientX, touch.clientY, center.x, center.y);
+        this.knobStartAngle = this.getCurrentKnobAngle() * (Math.PI / 180); // Convert to radians
+        this.touchStartTime = Date.now();
+        this.lastTouchTime = this.touchStartTime;
+        this.touchVelocity = 0;
+    }
+    
+    startMouseDrag(e) {
+        this.isDragging = true;
+        this.dial.style.cursor = 'grabbing';
         
-        const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-        
-        this.lastAngle = Math.atan2(clientY - centerY, clientX - centerX);
+        const center = this.getDialCenter();
+        this.lastAngle = this.getAngleFromPoint(e.clientX, e.clientY, center.x, center.y);
         
         e.preventDefault();
     }
     
-    drag(e) {
+    handleTouchMove(e) {
+        if (!this.isDragging || this.isMultiTouch) return;
+        
+        e.preventDefault();
+        
+        let activeTouch = null;
+        for (let i = 0; i < e.touches.length; i++) {
+            if (e.touches[i].identifier === this.activeTouchId) {
+                activeTouch = e.touches[i];
+                break;
+            }
+        }
+        
+        if (!activeTouch) {
+            this.handleInteractionEnd();
+            return;
+        }
+        
+        const center = this.getDialCenter();
+        const currentTouchAngle = this.getAngleFromPoint(activeTouch.clientX, activeTouch.clientY, center.x, center.y);
+        
+        const touchAngleDiff = currentTouchAngle - this.touchStartAngle;
+        const targetKnobAngle = this.knobStartAngle + (touchAngleDiff * this.touchSensitivity);
+        
+        let targetKnobDegrees = (targetKnobAngle * 180 / Math.PI) % 360;
+        if (targetKnobDegrees < 0) targetKnobDegrees += 360;
+        
+        const clampedDegrees = Math.max(0, Math.min(270, targetKnobDegrees));
+        const newBpm = 60 + (clampedDegrees / 270) * (240 - 60);
+        
+        const currentTime = Date.now();
+        const timeDiff = currentTime - this.lastTouchTime;
+        if (timeDiff > 0) {
+            const angleDiff = currentTouchAngle - this.lastAngle;
+            this.touchVelocity = angleDiff / timeDiff;
+        }
+        
+        const oldBpmRounded = Math.round(this.bpm);
+        const newBpmRounded = Math.round(newBpm);
+        
+        if (oldBpmRounded !== newBpmRounded) {
+            this.playDetentClick();
+        }
+        
+        this.setBPM(newBpm);
+        this.lastAngle = currentTouchAngle;
+        this.lastTouchTime = currentTime;
+    }
+    
+    handleMouseMove(e) {
         if (!this.isDragging) return;
         
-        const rect = this.dial.getBoundingClientRect();
-        const centerX = rect.left + rect.width / 2;
-        const centerY = rect.top + rect.height / 2;
-        
-        const clientX = e.type.includes('touch') ? e.touches[0].clientX : e.clientX;
-        const clientY = e.type.includes('touch') ? e.touches[0].clientY : e.clientY;
-        
-        const currentAngle = Math.atan2(clientY - centerY, clientX - centerX);
+        const center = this.getDialCenter();
+        const currentAngle = this.getAngleFromPoint(e.clientX, e.clientY, center.x, center.y);
         const angleDiff = currentAngle - this.lastAngle;
         
         let normalizedDiff = angleDiff;
@@ -182,9 +278,33 @@ class Metronome {
         e.preventDefault();
     }
     
-    stopDrag() {
+    handleTouchEnd(e) {
+        e.preventDefault();
+        
+        let activeTouchEnded = true;
+        if (this.activeTouchId !== null) {
+            for (let i = 0; i < e.touches.length; i++) {
+                if (e.touches[i].identifier === this.activeTouchId) {
+                    activeTouchEnded = false;
+                    break;
+                }
+            }
+        }
+        
+        if (activeTouchEnded) {
+            this.handleInteractionEnd();
+        }
+        
+        if (e.touches.length === 0) {
+            this.isMultiTouch = false;
+        }
+    }
+    
+    handleInteractionEnd() {
         this.isDragging = false;
         this.dial.style.cursor = 'pointer';
+        this.activeTouchId = null;
+        this.touchVelocity = 0;
     }
     
     setBPM(newBPM) {
