@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metronome</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="metronome-container">
+        <div class="metronome-body">
+            <h1 class="title">Metronome</h1>
+            
+            <div class="beat-indicator" id="beatIndicator"></div>
+            
+            <div class="bpm-display" id="bpmDisplay">
+                <div class="display-glass">
+                    <input type="text" class="bpm-input" id="bpmInput" value="120" maxlength="3" aria-label="BPM value">
+                    <span class="bpm-label">BPM</span>
+                </div>
+            </div>
+            
+            <div class="dial-container">
+                <div class="dial" id="bpmDial">
+                    <div class="dial-knob" id="dialKnob">
+                        <div class="knob-indicator"></div>
+                    </div>
+                    <div class="dial-marks">
+                        <div class="mark mark-60">60</div>
+                        <div class="mark mark-120">120</div>
+                        <div class="mark mark-180">180</div>
+                        <div class="mark mark-240">240</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="control-section">
+                <button class="start-stop-btn" id="startStopBtn">
+                    <span class="btn-text">START</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

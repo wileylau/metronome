@@ -1,0 +1,437 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+body {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    background: linear-gradient(135deg, #f8f8f8 0%, #e8e8e8 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.metronome-container {
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    justify-content: center;
+}
+
+.metronome-body {
+    background: linear-gradient(145deg, #ffffff 0%, #f0f0f0 100%);
+    border-radius: 20px;
+    padding: 40px 30px;
+    box-shadow: 
+        0 20px 40px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.8),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    text-align: center;
+    position: relative;
+    width: 100%;
+}
+
+.title {
+    font-size: 24px;
+    font-weight: 300;
+    color: #333;
+    margin-bottom: 30px;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+    letter-spacing: 2px;
+}
+
+.beat-indicator {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #f0f0f0, #d0d0d0);
+    box-shadow: 
+        inset 0 3px 6px rgba(0, 0, 0, 0.15),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.8),
+        0 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 0 auto 25px;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    position: relative;
+}
+
+.beat-indicator::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.6), transparent 70%);
+    opacity: 0.8;
+}
+
+.beat-indicator.active {
+    background: radial-gradient(circle at 30% 30%, #ff4444, #cc0000);
+    box-shadow: 
+        inset 0 3px 6px rgba(0, 0, 0, 0.3),
+        inset 0 -1px 2px rgba(255, 100, 100, 0.4),
+        0 0 20px rgba(255, 68, 68, 0.6),
+        0 0 40px rgba(255, 68, 68, 0.3),
+        0 2px 4px rgba(0, 0, 0, 0.2);
+    transform: scale(1.05);
+}
+
+.beat-indicator.active::before {
+    background: radial-gradient(circle at 30% 30%, rgba(255, 200, 200, 0.8), transparent 60%);
+}
+
+.bpm-display {
+    margin-bottom: 30px;
+    background: linear-gradient(145deg, #1a1a1a, #0f0f0f);
+    border-radius: 12px;
+    padding: 4px;
+    box-shadow: 
+        inset 0 4px 8px rgba(0, 0, 0, 0.4),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.05),
+        0 2px 4px rgba(0, 0, 0, 0.2);
+    border: 2px solid #333;
+    display: inline-block;
+    min-width: 140px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.bpm-display:hover {
+    box-shadow: 
+        inset 0 4px 8px rgba(0, 0, 0, 0.4),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.05),
+        0 2px 4px rgba(0, 0, 0, 0.2),
+        0 0 0 2px rgba(0, 255, 136, 0.2);
+}
+
+.display-glass {
+    background: linear-gradient(145deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9));
+    border-radius: 8px;
+    padding: 16px 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.display-glass::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+    pointer-events: none;
+}
+
+.display-glass::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    bottom: 2px;
+    border-radius: 6px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    pointer-events: none;
+}
+
+.bpm-input {
+    font-size: 36px;
+    font-weight: 600;
+    color: #00ff88;
+    text-shadow: 
+        0 0 10px rgba(0, 255, 136, 0.4),
+        0 0 20px rgba(0, 255, 136, 0.2);
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    width: 80px;
+    caret-color: #00ff88;
+}
+
+.bpm-input::selection {
+    background: rgba(0, 255, 136, 0.3);
+}
+
+.bpm-label {
+    font-size: 12px;
+    color: #666;
+    margin-left: 8px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.dial-container {
+    margin: 40px 0;
+    display: flex;
+    justify-content: center;
+}
+
+.dial {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: 
+        radial-gradient(circle at 30% 30%, #f8f8f8, #e0e0e0),
+        linear-gradient(145deg, #f0f0f0, #d8d8d8);
+    box-shadow: 
+        0 12px 24px rgba(0, 0, 0, 0.15),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.dial:hover {
+    box-shadow: 
+        0 14px 28px rgba(0, 0, 0, 0.18),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.dial:active {
+    cursor: grabbing;
+}
+
+.dial-knob {
+    cursor: grab;
+}
+
+.dial:active .dial-knob {
+    cursor: grabbing;
+}
+
+.dial-knob {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: 
+        radial-gradient(circle at 35% 35%, #f8f8f8, #e8e8e8),
+        conic-gradient(from 0deg, #f0f0f0, #e0e0e0, #f0f0f0);
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dial:active .dial-knob {
+    transform: translate(-50%, -50%) scale(0.98);
+    box-shadow: 
+        0 3px 6px rgba(0, 0, 0, 0.25),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.knob-indicator {
+    width: 3px;
+    height: 32px;
+    background: linear-gradient(to bottom, #555, #222);
+    border-radius: 1.5px;
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.knob-indicator::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.3), transparent);
+    border-radius: 1.5px 1.5px 0 0;
+}
+
+.dial-marks {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.mark {
+    position: absolute;
+    font-size: 12px;
+    font-weight: bold;
+    color: #666;
+    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.8);
+}
+
+.mark-60 {
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.mark-120 {
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.mark-180 {
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.mark-240 {
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.control-section {
+    margin-top: 30px;
+}
+
+.start-stop-btn {
+    width: 130px;
+    height: 55px;
+    border: none;
+    border-radius: 27px;
+    background: 
+        radial-gradient(circle at 30% 30%, #f8f8f8, #e8e8e8),
+        linear-gradient(145deg, #f0f0f0, #d8d8d8);
+    box-shadow: 
+        0 6px 12px rgba(0, 0, 0, 0.15),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.start-stop-btn::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    right: 2px;
+    height: 40%;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.4), transparent);
+    border-radius: 25px 25px 50% 50%;
+    pointer-events: none;
+}
+
+.start-stop-btn:hover {
+    background: 
+        radial-gradient(circle at 30% 30%, #f0f0f0, #e0e0e0),
+        linear-gradient(145deg, #e8e8e8, #d0d0d0);
+    transform: translateY(-1px);
+    box-shadow: 
+        0 8px 16px rgba(0, 0, 0, 0.2),
+        inset 0 2px 4px rgba(255, 255, 255, 0.9),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.start-stop-btn:active {
+    transform: translateY(2px);
+    box-shadow: 
+        0 2px 6px rgba(0, 0, 0, 0.2),
+        inset 0 3px 6px rgba(0, 0, 0, 0.15),
+        inset 0 -1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.start-stop-btn.active {
+    background: 
+        radial-gradient(circle at 30% 30%, #ff5555, #dd3333),
+        linear-gradient(145deg, #ff4444, #cc2222);
+    color: white;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+    box-shadow: 
+        0 6px 12px rgba(255, 68, 68, 0.3),
+        inset 0 2px 4px rgba(255, 100, 100, 0.4),
+        inset 0 -2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.start-stop-btn.active:hover {
+    background: 
+        radial-gradient(circle at 30% 30%, #ff4444, #cc2222),
+        linear-gradient(145deg, #ff3333, #bb1111);
+}
+
+.btn-text {
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+    letter-spacing: 1px;
+}
+
+.start-stop-btn.active .btn-text {
+    color: white;
+}
+
+@media (max-width: 480px) {
+    .metronome-body {
+        padding: 30px 20px;
+        margin: 10px;
+    }
+    
+    .title {
+        font-size: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .dial {
+        width: 160px;
+        height: 160px;
+    }
+    
+    .dial-knob {
+        width: 110px;
+        height: 110px;
+    }
+    
+    .bpm-value {
+        font-size: 28px;
+    }
+    
+    .bpm-display {
+        padding: 12px 16px;
+        min-width: 100px;
+    }
+}
+
+@media (max-width: 360px) {
+    .dial {
+        width: 140px;
+        height: 140px;
+    }
+    
+    .dial-knob {
+        width: 95px;
+        height: 95px;
+    }
+    
+    .knob-indicator {
+        height: 25px;
+        top: 12px;
+    }
+}
