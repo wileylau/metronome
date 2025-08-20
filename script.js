@@ -78,7 +78,19 @@ class Metronome {
     }
     
     bindEvents() {
-        this.startStopBtn.addEventListener('click', () => this.toggleMetronome());
+        this.startStopBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.toggleMetronome();
+        });
+        
+        this.startStopBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+        });
+        
+        this.startStopBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.toggleMetronome();
+        });
         
         this.bpmInput.addEventListener('input', (e) => this.handleBpmInput(e));
         this.bpmInput.addEventListener('keydown', (e) => this.handleBpmKeydown(e));
@@ -186,7 +198,7 @@ class Metronome {
         this.dial.style.cursor = 'grabbing';
         
         this.touchStartAngle = this.getAngleFromPoint(touch.clientX, touch.clientY, center.x, center.y);
-        this.knobStartAngle = this.getCurrentKnobAngle() * (Math.PI / 180); // Convert to radians
+        this.knobStartAngle = this.getCurrentKnobAngle() * (Math.PI / 180);
         this.touchStartTime = Date.now();
         this.lastTouchTime = this.touchStartTime;
         this.touchVelocity = 0;
@@ -279,7 +291,9 @@ class Metronome {
     }
     
     handleTouchEnd(e) {
-        e.preventDefault();
+        if (e.cancelable) {
+            e.preventDefault();
+        }
         
         let activeTouchEnded = true;
         if (this.activeTouchId !== null) {
@@ -360,24 +374,32 @@ class Metronome {
         this.dialKnob.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`;
     }
     
-    toggleMetronome() {
+    async toggleMetronome() {
         if (this.isPlaying) {
             this.stop();
         } else {
-            this.start();
+            await this.start();
         }
     }
     
-    start() {
+    async start() {
         if (this.isPlaying) return;
+        
+        if (!this.audioContext) {
+            this.initAudioContext();
+        }
+        
+        if (this.audioContext && this.audioContext.state === 'suspended') {
+            try {
+                await this.audioContext.resume();
+            } catch (error) {
+                console.warn('Failed to resume AudioContext:', error);
+            }
+        }
         
         this.isPlaying = true;
         this.startStopBtn.classList.add('active');
         this.startStopBtn.querySelector('.btn-text').textContent = 'STOP';
-        
-        if (this.audioContext && this.audioContext.state === 'suspended') {
-            this.audioContext.resume();
-        }
         
         this.nextBeatTime = this.audioContext ? this.audioContext.currentTime : Date.now() / 1000;
         this.beatQueue = [];
